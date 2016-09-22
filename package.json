@@ -1,0 +1,5 @@
+{
+  "name": "Speech Component",
+  "private": true,
+  "main": "./Speech"
+}
