@@ -1,4 +1,7 @@
 import React from 'react';
+import classnames from 'classnames';
+
+import './Speech.scss';
 
 class Speech extends React.Component {
 
@@ -19,6 +22,7 @@ class Speech extends React.Component {
     rate: 1,
     pitch: 1,
     lang: null,
+    onProgress: () => {},
     onCurrentWord: () => {}
   };
 
@@ -26,7 +30,9 @@ class Speech extends React.Component {
     super(props);
 
     this.state = {
+      progress: 0,
       isStarted: false,
+      isFinished: false,
       isSpeechSupported: !!(window.SpeechSynthesisUtterance)
     };
   }
@@ -39,16 +45,25 @@ class Speech extends React.Component {
   }
 
   render() {
-    const { isSpeechSupported, isStarted } = this.state;
+    const { isSpeechSupported, isStarted, isFinished, progress } = this.state;
 
     if (!isSpeechSupported) {
+      console.warn('SpeechSynthesisUtterance is not supported!');
       return <span />;
     }
 
+    const classes = classnames('speech', {
+      speech__speaking: isStarted,
+      speech__stoped: !isStarted,
+      speech__finished: isFinished
+    });
+
     return (
-      <div className="speech">
+      <div className={classes}>
         {(isStarted) ? this.renderPauseButton() : this.renderStartButton()}
-        <h1>{this.state.currentWord}</h1>
+        <div className="speech__progress">
+          <div className="speech__progress-bar" style={{width: `${progress}%`}} />
+        </div>
       </div>
     );
   }
@@ -70,11 +85,15 @@ class Speech extends React.Component {
   }
 
   enableStartButton() {
-    this.setState({ isStarted: false });
+    this.setState({ isStarted: false});
   }
 
   enablePauseButton() {
-    this.setState({ isStarted: true });
+    this.setState({ isStarted: true, isFinished: false });
+  }
+
+  setProgress(percent) {
+    this.setState({ progress: percent });
   }
 
   onStartClick = () => {
@@ -104,6 +123,10 @@ class Speech extends React.Component {
   _initSpeech() {
     const { text, volume, rate, pitch, lang, onCurrentWord } = this.props;
 
+    window.speechSynthesis.onvoiceschanged = () => {
+      console.log('getVoices:::', window.speechSynthesis.getVoices());
+    };
+
     window.speechSynthesis.cancel();
 
     this.utterance = new SpeechSynthesisUtterance(text);
@@ -112,9 +135,11 @@ class Speech extends React.Component {
     this.utterance.pitch = pitch;
     this.utterance.volume = volume;
 
+
+
     this.utterance.onend = () => {
       this.enableStartButton();
-      console.log('end');
+      this.setState({ isFinished: true });
       window.speechSynthesis.cancel();
     };
 
@@ -122,8 +147,11 @@ class Speech extends React.Component {
       window.speechSynthesis.cancel();
     };
 
+    const textLength = text.length;
     this.utterance.onboundary = (event) => {
       const words = text.substring(event.charIndex, text.length).split(' ');
+      const partialLength = event.charIndex + words[0].length;
+      this.setProgress((partialLength * 100) / textLength);
       onCurrentWord(words[0]);
     };
   }

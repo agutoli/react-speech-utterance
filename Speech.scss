@@ -1,1 +1,28 @@
-@import 'src/styles/base';
+.speech {
+  background: #eee;
+  display: inline-block;
+  padding: 0.2rem 0;
+  min-width: 5rem;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: #333 0 0 3px;
+
+  button {
+    background: #eee;
+    border: none;
+    width: 100%;
+    padding: 0 1rem;
+    outline: none;
+  }
+}
+
+.speech__progress {
+  height: 2px;
+  background: #ccc;
+}
+
+.speech__progress-bar {
+  transition: width 0.5s;
+  background: blue;
+  height: 2px;
+}
